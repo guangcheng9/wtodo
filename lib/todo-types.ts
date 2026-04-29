@@ -35,6 +35,12 @@ export type WidgetState = {
   widgetOpacity: number
   theme: "light" | "dark"
   windowLevel: WindowLevel
+  /**
+   * Whether the widget shows up on every Windows virtual desktop or only
+   * on the desktop it was last placed on. Defaults to false (current
+   * desktop only) — most users find a follow-everywhere widget intrusive.
+   */
+  visibleOnAllWorkspaces: boolean
   autoLaunch: boolean
   /** Electron accelerator string, e.g. "CommandOrControl+Shift+T". Empty disables. */
   shortcut: string
@@ -49,6 +55,12 @@ export type WidgetState = {
   borderRadius: number
 }
 
+// Paths are kept root-absolute ("/wallpapers/...") so they Just Work in
+// dev (Next.js serves the `public/` folder at the site root). The
+// `resolveWallpaperUrl` helper in `lib/wallpaper-url.ts` converts them to
+// document-relative form at render time when the renderer is loaded via
+// `file://` (the packaged Electron build) — where absolute paths would
+// otherwise resolve to the disk root and 404.
 export const WALLPAPERS = [
   { id: "mountain", name: "山景", url: "/wallpapers/mountain.jpg" },
   { id: "ocean", name: "海洋", url: "/wallpapers/ocean.jpg" },
@@ -82,6 +94,7 @@ export const DEFAULT_WIDGET_STATE: WidgetState = {
   widgetOpacity: 65,
   theme: "light",
   windowLevel: "top",
+  visibleOnAllWorkspaces: false,
   autoLaunch: false,
   shortcut: DEFAULT_SHORTCUT,
   edgeHide: false,

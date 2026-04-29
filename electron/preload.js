@@ -11,11 +11,17 @@ window.addEventListener("DOMContentLoaded", () => {
 
 contextBridge.exposeInMainWorld("desktop", {
   isElectron: true,
+  // Expose `process.platform` so the renderer can hide / disable features
+  // that don't work on a given OS (e.g. the "show on all virtual desktops"
+  // toggle is currently only honoured by Electron on macOS / Linux).
+  platform: process.platform,
   notify: (title, body) => ipcRenderer.invoke("notify", { title, body }),
   minimize: () => ipcRenderer.invoke("window:minimize"),
   hide: () => ipcRenderer.invoke("window:hide"),
   close: () => ipcRenderer.invoke("window:close"),
   setWindowLevel: (level) => ipcRenderer.invoke("window:set-level", level),
+  setVisibleOnAllWorkspaces: (value) =>
+    ipcRenderer.invoke("window:set-visible-all-workspaces", value),
   setLocked: (value) => ipcRenderer.invoke("window:set-locked", value),
   edgeHide: {
     setEnabled: (value) => ipcRenderer.invoke("edgehide:set-enabled", value),

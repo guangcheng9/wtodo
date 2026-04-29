@@ -33,11 +33,18 @@ export type StoragePathResult = {
 
 type DesktopBridge = {
   isElectron: boolean
+  /** Same string as Node's `process.platform` ("win32" / "darwin" / "linux"). */
+  platform: NodeJS.Platform
   notify: (title: string, body: string) => Promise<void>
   minimize: () => Promise<void>
   hide: () => Promise<void>
   close: () => Promise<void>
   setWindowLevel: (level: "top" | "normal" | "desktop") => Promise<void>
+  /**
+   * Toggle whether the widget is visible on every Windows virtual
+   * desktop (true) or only on the desktop it currently lives on (false).
+   */
+  setVisibleOnAllWorkspaces: (value: boolean) => Promise<{ value: boolean }>
   setLocked: (value: boolean) => Promise<void>
   edgeHide: {
     /**

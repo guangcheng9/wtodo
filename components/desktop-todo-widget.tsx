@@ -25,6 +25,7 @@ import {
   storageRead,
   storageWrite,
 } from "@/lib/use-desktop"
+import { resolveWallpaperUrl } from "@/lib/wallpaper-url"
 import { cn } from "@/lib/utils"
 
 const MIN_W = 300
@@ -133,6 +134,7 @@ export function DesktopTodoWidget() {
     })
 
     desktop.setWindowLevel(widget.windowLevel)
+    desktop.setVisibleOnAllWorkspaces(widget.visibleOnAllWorkspaces)
     desktop.setLocked(widget.pinned)
 
     if (widget.shortcut) {
@@ -150,6 +152,14 @@ export function DesktopTodoWidget() {
     if (!desktop || !mounted) return
     desktop.setLocked(widget.pinned)
   }, [desktop, mounted, widget.pinned])
+
+  // Sync workspace visibility independently of windowLevel so the user can
+  // mix any combination (e.g. always-on-top + only-current-desktop, or
+  // desktop-level + show-on-all-workspaces).
+  useEffect(() => {
+    if (!desktop || !mounted) return
+    desktop.setVisibleOnAllWorkspaces(widget.visibleOnAllWorkspaces)
+  }, [desktop, mounted, widget.visibleOnAllWorkspaces])
 
   // Sync edge auto-hide enabled state to main process. The main process
   // handles BOTH hide and restore decisions on its own poll loop using the
@@ -337,7 +347,7 @@ export function DesktopTodoWidget() {
   // Wallpaper layer (always rendered inside the widget so it switches in any mode)
   const isCustom = widget.wallpaper === "custom" && widget.customWallpaper
   const builtin = WALLPAPERS.find((w) => w.id === widget.wallpaper) ?? WALLPAPERS[0]
-  const wallpaperUrl = isCustom ? (widget.customWallpaper as string) : builtin.url
+  const rawWallpaperUrl = isCustom ? (widget.customWallpaper as string) : builtin.url
   // file://, http(s)://, data: and "/" all use background-image; CSS gradient
   // strings (linear-gradient...) use background.
   const isImageWp =
@@ -346,6 +356,9 @@ export function DesktopTodoWidget() {
     builtin.url.startsWith("http") ||
     builtin.url.startsWith("data:") ||
     builtin.url.startsWith("file:")
+  // Convert root-absolute `public/` paths to the form that works under both
+  // dev (`/wallpapers/...`) and packaged Electron (`wallpapers/...`).
+  const wallpaperUrl = isImageWp ? resolveWallpaperUrl(rawWallpaperUrl) : rawWallpaperUrl
   const wallpaperStyle: React.CSSProperties = isImageWp
     ? {
         backgroundImage: `url("${wallpaperUrl}")`,

@@ -14,7 +14,16 @@ const {
 const path = require("path")
 const fs = require("fs")
 const { spawn } = require("child_process")
-const AutoLaunch = require("auto-launch")
+// Defensive: if `auto-launch` ever fails to load (missing native dep,
+// AV quarantine, mis-packaged build) the rest of the app should still
+// start. The auto-launch UI surfaces the failure to the user instead of
+// crashing the whole main process at boot.
+let AutoLaunch = null
+try {
+  AutoLaunch = require("auto-launch")
+} catch (err) {
+  console.error("[main] failed to load auto-launch:", err)
+}
 
 const isDev = !app.isPackaged
 const DEV_URL = "http://localhost:3000"
@@ -24,10 +33,20 @@ let mainWindow = null
 let tray = null
 let currentShortcut = DEFAULT_SHORTCUT
 
-const autoLauncher = new AutoLaunch({
-  name: "DesktopTodo",
-  path: app.getPath("exe"),
-})
+// `autoLauncher` is null when the module failed to load. All call sites
+// below null-check before invoking and surface a friendly error string
+// through the IPC return value.
+let autoLauncher = null
+if (AutoLaunch) {
+  try {
+    autoLauncher = new AutoLaunch({
+      name: "DesktopTodo",
+      path: app.getPath("exe"),
+    })
+  } catch (err) {
+    console.error("[main] AutoLaunch constructor failed:", err)
+  }
+}
 
 // ------------------------------------------------------------------
 // Storage: a tiny config file (always at userData) tells us where the
@@ -83,6 +102,29 @@ function getDataDir() {
   const meta = readMeta()
   ensureDir(meta.dataDir)
   return meta.dataDir
+}
+
+/**
+ * Older builds copied each picked custom wallpaper into
+ * `<dataDir>/wallpapers/wallpaper-<ts>.jpg` and stored a `localfile://`
+ * URL in widget.json. The current build embeds the picked image as a
+ * base64 data URL directly inside widget.json (so widget.json itself
+ * always holds at most ONE wallpaper) and the legacy directory just
+ * accumulates orphaned files across upgrades.
+ *
+ * We only run this when the user actively replaces the wallpaper through
+ * the picker — never at startup — to honour the user's preference of not
+ * touching disk on launch and to make the cleanup feel coupled to the
+ * action that triggered it.
+ */
+function cleanupLegacyWallpaperDir() {
+  try {
+    const dir = path.join(getDataDir(), "wallpapers")
+    if (!fs.existsSync(dir)) return
+    fs.rmSync(dir, { recursive: true, force: true })
+  } catch (err) {
+    console.error("[v0] cleanupLegacyWallpaperDir failed:", err)
+  }
 }
 
 function readDataFile(name) {
@@ -142,24 +184,40 @@ function moveDirContents(fromDir, toDir) {
 // ------------------------------------------------------------------
 // Window level: combine alwaysOnTop / pinToDesktop into one switch.
 // ------------------------------------------------------------------
+// Keep the latest "visible on all workspaces" preference so we can
+// re-apply it after every windowLevel change (Electron's window level
+// API resets this flag on Windows in some cases).
+let visibleOnAllWorkspaces = false
+
+function applyVisibleOnAllWorkspaces(value) {
+  visibleOnAllWorkspaces = !!value
+  if (!mainWindow) return
+  try {
+    mainWindow.setVisibleOnAllWorkspaces(visibleOnAllWorkspaces, {
+      visibleOnFullScreen: true,
+    })
+  } catch (err) {
+    console.error("[v0] setVisibleOnAllWorkspaces error:", err)
+  }
+}
+
 function applyWindowLevel(level) {
   if (!mainWindow) return
   try {
     if (level === "top") {
       mainWindow.setAlwaysOnTop(true, "floating")
       mainWindow.setSkipTaskbar(false)
-      mainWindow.setVisibleOnAllWorkspaces(false)
     } else if (level === "desktop") {
       mainWindow.setAlwaysOnTop(false)
       mainWindow.setSkipTaskbar(true)
-      mainWindow.setVisibleOnAllWorkspaces(true, {
-        visibleOnFullScreen: true,
-      })
     } else {
       mainWindow.setAlwaysOnTop(false)
       mainWindow.setSkipTaskbar(false)
-      mainWindow.setVisibleOnAllWorkspaces(false)
     }
+    // Re-assert the workspace flag so changing window level never resets it.
+    mainWindow.setVisibleOnAllWorkspaces(visibleOnAllWorkspaces, {
+      visibleOnFullScreen: true,
+    })
   } catch (err) {
     console.error("[v0] applyWindowLevel error:", err)
   }
@@ -480,8 +538,10 @@ function createTray() {
       {
         label: "开机自启动",
         type: "checkbox",
+        enabled: !!autoLauncher,
         checked: !!autoLaunchEnabled,
         click: async (item) => {
+          if (!autoLauncher) return
           try {
             if (item.checked) await autoLauncher.enable()
             else await autoLauncher.disable()
@@ -502,6 +562,10 @@ function createTray() {
     ])
 
   const rebuildTrayMenu = () => {
+    if (!autoLauncher) {
+      tray.setContextMenu(buildMenu(false))
+      return
+    }
     autoLauncher
       .isEnabled()
       .then((enabled) => tray.setContextMenu(buildMenu(enabled)))
@@ -579,6 +643,11 @@ ipcMain.handle("window:minimize", () => mainWindow?.minimize())
 ipcMain.handle("window:hide", () => mainWindow?.hide())
 ipcMain.handle("window:close", () => mainWindow?.close())
 
+ipcMain.handle("window:set-visible-all-workspaces", (_e, value) => {
+  applyVisibleOnAllWorkspaces(!!value)
+  return { value: visibleOnAllWorkspaces }
+})
+
 ipcMain.handle("window:set-level", (_e, level) => {
   applyWindowLevel(level || "top")
 })
@@ -602,6 +671,7 @@ ipcMain.handle("edgehide:set-anim-ms", (_e, value) => {
 
 // ---- Auto-launch ----
 ipcMain.handle("autolaunch:get", async () => {
+  if (!autoLauncher) return false
   try {
     return await autoLauncher.isEnabled()
   } catch {
@@ -610,6 +680,12 @@ ipcMain.handle("autolaunch:get", async () => {
 })
 
 ipcMain.handle("autolaunch:set", async (_e, value) => {
+  if (!autoLauncher) {
+    return {
+      enabled: false,
+      error: "开机自启动模块未加载，请重新安装应用",
+    }
+  }
   let error = null
   try {
     if (value) await autoLauncher.enable()
@@ -697,6 +773,11 @@ ipcMain.handle("dialog:pick-image", async () => {
     const ext = (path.extname(src) || ".jpg").toLowerCase().slice(1)
     const mime = IMAGE_MIME[ext] || "image/jpeg"
     const dataUrl = `data:${mime};base64,${buf.toString("base64")}`
+    // Successfully picked a fresh image — sweep any orphan files left by
+    // older builds. The renderer will overwrite `customWallpaper` in
+    // widget.json with this new data URL, so widget.json itself is
+    // guaranteed to hold exactly one wallpaper.
+    cleanupLegacyWallpaperDir()
     return { canceled: false, url: dataUrl }
   } catch (err) {
     return {

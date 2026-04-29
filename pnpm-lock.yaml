@@ -95,6 +95,9 @@ importers:
       '@vercel/analytics':
         specifier: 1.6.1
         version: 1.6.1(next@16.2.4(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      auto-launch:
+        specifier: ^5.0.6
+        version: 5.0.6
       autoprefixer:
         specifier: ^10.4.20
         version: 10.4.24(postcss@8.5.6)
@@ -168,9 +171,6 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.2.3(@types/react@19.2.14)
-      auto-launch:
-        specifier: ^5.0.6
-        version: 5.0.6
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
