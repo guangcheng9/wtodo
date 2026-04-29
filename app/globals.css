@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Primary brand: soft sky blue */
+  --background: oklch(0.98 0.005 240);
+  --foreground: oklch(0.2 0.02 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.02 240);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.02 240);
+  --primary: oklch(0.55 0.15 240);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.01 240);
+  --secondary-foreground: oklch(0.3 0.02 240);
+  --muted: oklch(0.95 0.005 240);
+  --muted-foreground: oklch(0.5 0.02 240);
+  --accent: oklch(0.78 0.13 70);
+  --accent-foreground: oklch(0.2 0.02 240);
+  --destructive: oklch(0.6 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.9 0.01 240);
+  --input: oklch(0.92 0.01 240);
+  --ring: oklch(0.55 0.15 240);
+  --chart-1: oklch(0.55 0.15 240);
+  --chart-2: oklch(0.78 0.13 70);
+  --chart-3: oklch(0.65 0.12 200);
+  --chart-4: oklch(0.7 0.1 50);
+  --chart-5: oklch(0.5 0.1 280);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.98 0.005 240);
+  --sidebar-foreground: oklch(0.2 0.02 240);
+  --sidebar-primary: oklch(0.55 0.15 240);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.95 0.01 240);
+  --sidebar-accent-foreground: oklch(0.3 0.02 240);
+  --sidebar-border: oklch(0.9 0.01 240);
+  --sidebar-ring: oklch(0.55 0.15 240);
+}
+
+.dark {
+  --background: oklch(0.18 0.02 240);
+  --foreground: oklch(0.96 0.005 240);
+  --card: oklch(0.22 0.02 240);
+  --card-foreground: oklch(0.96 0.005 240);
+  --popover: oklch(0.22 0.02 240);
+  --popover-foreground: oklch(0.96 0.005 240);
+  --primary: oklch(0.7 0.15 240);
+  --primary-foreground: oklch(0.15 0.02 240);
+  --secondary: oklch(0.28 0.02 240);
+  --secondary-foreground: oklch(0.96 0.005 240);
+  --muted: oklch(0.28 0.02 240);
+  --muted-foreground: oklch(0.7 0.01 240);
+  --accent: oklch(0.78 0.13 70);
+  --accent-foreground: oklch(0.18 0.02 240);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.32 0.02 240);
+  --input: oklch(0.32 0.02 240);
+  --ring: oklch(0.7 0.15 240);
+  --chart-1: oklch(0.7 0.15 240);
+  --chart-2: oklch(0.78 0.13 70);
+  --chart-3: oklch(0.65 0.12 200);
+  --chart-4: oklch(0.7 0.1 50);
+  --chart-5: oklch(0.6 0.1 280);
+  --sidebar: oklch(0.22 0.02 240);
+  --sidebar-foreground: oklch(0.96 0.005 240);
+  --sidebar-primary: oklch(0.7 0.15 240);
+  --sidebar-primary-foreground: oklch(0.15 0.02 240);
+  --sidebar-accent: oklch(0.28 0.02 240);
+  --sidebar-accent-foreground: oklch(0.96 0.005 240);
+  --sidebar-border: oklch(0.32 0.02 240);
+  --sidebar-ring: oklch(0.7 0.15 240);
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    overflow: hidden;
+  }
+  /* When running inside the Electron transparent window, html/body must be
+     fully transparent so the rounded glass widget is the only visible surface.
+     On Windows the DWM compositor paints anything inside the BrowserWindow
+     bounds — including the area outside our CSS `border-radius` — with the
+     last opaque colour seen on the document body. That's where the square
+     "left over" you saw at the bottom corners came from. Using `clip-path`
+     on every level of the document tree removes those pixels from the
+     compositor's input entirely (it's GPU-friendly and respected by DWM),
+     so the corners become genuinely transparent regardless of what any
+     child paints. */
+  html.electron,
+  html.electron body {
+    background: transparent !important;
+  }
+  html.electron {
+    --widget-radius: 16px;
+  }
+  html.electron,
+  html.electron body,
+  html.electron #__next,
+  html.electron body > div {
+    clip-path: inset(0 round var(--widget-radius));
+    -webkit-clip-path: inset(0 round var(--widget-radius));
+    border-radius: var(--widget-radius);
+  }
+  html.electron body {
+    overflow: hidden;
+  }
+}
+
+/* Custom scrollbar for the todo widget */
+.todo-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.todo-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.todo-scroll::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0.02 240 / 0.3);
+  border-radius: 3px;
+}
+.todo-scroll::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0.02 240 / 0.5);
+}
+
+/* Glass effect */
+.glass {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
